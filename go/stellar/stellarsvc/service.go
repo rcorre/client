@@ -3,6 +3,7 @@ package stellarsvc
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/keybase/client/go/libkb"
 	"github.com/keybase/client/go/protocol/stellar1"
@@ -77,7 +78,9 @@ func (s *Server) SendLocal(ctx context.Context, arg stellar1.SendLocalArg) (stel
 	if err = s.assertLoggedIn(ctx); err != nil {
 		return stellar1.PaymentResult{}, err
 	}
-
+	if !arg.Asset.IsNativeXLM() {
+		return stellar1.PaymentResult{}, fmt.Errorf("sending non-XLM assets is not supported")
+	}
 	return stellar.SendPayment(ctx, s.G(), stellar.RecipientInput(arg.Recipient), arg.Amount)
 }
 

@@ -67,8 +67,8 @@
           "name": "errMsg"
         },
         {
-          "type": "EncryptedNote",
-          "name": "note"
+          "type": "string",
+          "name": "noteB64"
         },
         {
           "type": "Asset",
@@ -171,8 +171,8 @@
           "name": "members"
         },
         {
-          "type": "EncryptedNote",
-          "name": "note"
+          "type": "string",
+          "name": "noteB64"
         },
         {
           "type": {
@@ -215,8 +215,8 @@
           "name": "displayCurrency"
         },
         {
-          "type": "EncryptedNote",
-          "name": "note"
+          "type": "string",
+          "name": "noteB64"
         },
         {
           "type": "string",
@@ -316,6 +316,10 @@
             "string"
           ],
           "name": "displayCurrency"
+        },
+        {
+          "type": "string",
+          "name": "noteB64"
         }
       ]
     },

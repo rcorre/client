@@ -169,12 +169,14 @@ func (o EncryptedNote) DeepCopy() EncryptedNote {
 
 type NoteContents struct {
 	Version   int           `codec:"version" json:"version"`
+	Note      string        `codec:"note" json:"note"`
 	StellarID TransactionID `codec:"stellarID" json:"stellarID"`
 }
 
 func (o NoteContents) DeepCopy() NoteContents {
 	return NoteContents{
 		Version:   o.Version,
+		Note:      o.Note,
 		StellarID: o.StellarID.DeepCopy(),
 	}
 }

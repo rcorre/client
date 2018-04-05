@@ -52,6 +52,7 @@ protocol common {
 
   record NoteContents {
     int version;
+    string note;
     TransactionID stellarID;
   }
 

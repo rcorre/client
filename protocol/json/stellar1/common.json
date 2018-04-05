@@ -161,6 +161,10 @@
           "name": "version"
         },
         {
+          "type": "string",
+          "name": "note"
+        },
+        {
           "type": "TransactionID",
           "name": "stellarID"
         }

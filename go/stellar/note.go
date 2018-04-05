@@ -2,6 +2,7 @@ package stellar
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/keybase/client/go/libkb"
@@ -9,18 +10,27 @@ import (
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
+func noteEncryptB64(ctx context.Context, g *libkb.GlobalContext, note stellar1.NoteContents, other *libkb.User) (noteB64 string, err error) {
+	obj, err := noteEncrypt(ctx, g, note, other)
+	if err != nil {
+		return "", err
+	}
+	pack, err := libkb.MsgpackEncode(obj)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(pack), nil
+}
+
 // noteEncrypt encrypts a note for the logged-in user as well as optionally for `other`.
 // For a self-note where `other` is nil, uses a secretbox box with a key derived from the logged-in user's PUK.
 func noteEncrypt(ctx context.Context, g *libkb.GlobalContext, note stellar1.NoteContents, other *libkb.User) (res stellar1.EncryptedNote, err error) {
 	if other != nil {
 		return res, fmt.Errorf("TODO: shared note")
 	}
-	upkv2, _, err := g.GetUPAKLoader().LoadV2(libkb.NewLoadUserArgWithContext(ctx, g))
+	me, err := loadMeUpk(ctx, g)
 	if err != nil {
 		return res, err
-	}
-	if upkv2 == nil {
-		return res, fmt.Errorf("could not load logged-in user")
 	}
 	pukring, err := g.GetPerUserKeyring()
 	if err != nil {
@@ -44,10 +54,10 @@ func noteEncrypt(ctx context.Context, g *libkb.GlobalContext, note stellar1.Note
 		return res, err
 	}
 	res.Sender = stellar1.NoteRecipient{
-		User:   upkv2.Current.ToUserVersion(),
+		User:   me.ToUserVersion(),
 		PukGen: pukGen,
 	}
-	return res, fmt.Errorf("note todo")
+	return res, nil
 }
 
 // noteEncryptHelper does the encryption part and returns a partially populated result.
@@ -71,4 +81,54 @@ func noteEncryptHelper(ctx context.Context, note stellar1.NoteContents, symmetri
 		E: secbox,
 		N: nonce,
 	}, nil
+}
+
+func noteDecryptB64(ctx context.Context, g *libkb.GlobalContext, noteB64 string) (res stellar1.NoteContents, err error) {
+	pack, err := base64.StdEncoding.DecodeString(noteB64)
+	if err != nil {
+		return res, err
+	}
+	var obj stellar1.EncryptedNote
+	err = libkb.MsgpackDecode(&obj, pack)
+	if err != nil {
+		return res, err
+	}
+	return noteDecrypt(ctx, g, obj)
+}
+
+func noteDecrypt(ctx context.Context, g *libkb.GlobalContext, note stellar1.EncryptedNote) (res stellar1.NoteContents, err error) {
+	if note.V != 1 {
+		return res, fmt.Errorf("unsupported note version: %v", note.V)
+	}
+	if note.Recipient != nil {
+		return res, fmt.Errorf("TODO: shared note")
+	}
+	me, err := loadMeUpk(ctx, g)
+	if err != nil {
+		return res, err
+	}
+	if !note.Sender.Eq(me.ToUserVersion()) {
+		return res, fmt.Errorf("note not encrypted for logged-in user")
+	}
+	pukring, err := g.GetPerUserKeyring()
+	if err != nil {
+		return res, err
+	}
+	err = pukring.Sync(ctx)
+	if err != nil {
+		return res, err
+	}
+	pukSeed, err := pukring.GetSeedByGeneration(ctx, note.Sender.PukGen)
+	if err != nil {
+		return res, err
+	}
+	symmetricKey, err := pukSeed.DeriveSymmetricKey(libkb.DeriveReasonPUKStellarSelfNote)
+	if err != nil {
+		return res, err
+	}
+	return noteDecryptHelper(ctx, note, symmetricKey)
+}
+
+func noteDecryptHelper(ctx context.Context, note stellar1.EncryptedNote, symmetricKey libkb.NaclSecretBoxKey) (res stellar1.NoteContents, err error) {
+	return res, fmt.Errorf("TODO decrypt")
 }

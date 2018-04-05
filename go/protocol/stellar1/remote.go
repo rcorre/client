@@ -9,32 +9,6 @@ import (
 	context "golang.org/x/net/context"
 )
 
-type EncryptedNote struct {
-	V   int          `codec:"v" json:"v"`
-	E   []byte       `codec:"e" json:"e"`
-	N   []byte       `codec:"n" json:"n"`
-	KID keybase1.KID `codec:"KID" json:"KID"`
-}
-
-func (o EncryptedNote) DeepCopy() EncryptedNote {
-	return EncryptedNote{
-		V: o.V,
-		E: (func(x []byte) []byte {
-			if x == nil {
-				return nil
-			}
-			return append([]byte{}, x...)
-		})(o.E),
-		N: (func(x []byte) []byte {
-			if x == nil {
-				return nil
-			}
-			return append([]byte{}, x...)
-		})(o.N),
-		KID: o.KID.DeepCopy(),
-	}
-}
-
 type Members struct {
 	FromStellar  AccountID         `codec:"fromStellar" json:"fromStellar"`
 	FromKeybase  string            `codec:"fromKeybase" json:"fromKeybase"`

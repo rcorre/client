@@ -197,7 +197,7 @@ func LookupRecipient(ctx context.Context, g *libkb.GlobalContext, to RecipientIn
 	return &r, nil
 }
 
-func postFromCurrentUser(ctx context.Context, g *libkb.GlobalContext, acctID stellarnet.AddressStr, recipient *Recipient) stellar1.PaymentPost {
+func makePostFromCurrentUser(ctx context.Context, g *libkb.GlobalContext, acctID stellarnet.AddressStr, recipient *Recipient) stellar1.PaymentPost {
 	uid, deviceID, _, _, _ := g.ActiveDevice.AllFields()
 	post := stellar1.PaymentPost{
 		Members: stellar1.Members{
@@ -219,7 +219,9 @@ func postFromCurrentUser(ctx context.Context, g *libkb.GlobalContext, acctID ste
 	return post
 }
 
-func SendPayment(ctx context.Context, g *libkb.GlobalContext, to RecipientInput, amount string) (stellar1.PaymentResult, error) {
+// SendPayment sends XLM
+// `note` is optional. An empty string will not attach a note.
+func SendPayment(ctx context.Context, g *libkb.GlobalContext, to RecipientInput, amount string, note string) (stellar1.PaymentResult, error) {
 	// look up sender wallet
 	primary, err := LookupSenderPrimary(ctx, g)
 	if err != nil {
@@ -241,11 +243,12 @@ func SendPayment(ctx context.Context, g *libkb.GlobalContext, to RecipientInput,
 		return stellar1.PaymentResult{}, err
 	}
 
-	post := postFromCurrentUser(ctx, g, primaryAccountID, recipient)
+	post := makePostFromCurrentUser(ctx, g, primaryAccountID, recipient)
 
 	sp := NewSeqnoProvider(ctx, g)
 
 	// check if recipient account exists
+	var txID stellar1.TransactionID
 	_, err = BalanceXLM(ctx, g, stellar1.AccountID(recipient.AccountID.String()))
 	if err != nil {
 		// if no balance, create_account operation
@@ -260,6 +263,13 @@ func SendPayment(ctx context.Context, g *libkb.GlobalContext, to RecipientInput,
 		post.StellarAccountSeqno, post.SignedTransaction, err = senderAcct.PaymentXLMTransaction(primarySeed, recipient.AccountID, amount, sp)
 		if err != nil {
 			return stellar1.PaymentResult{}, err
+		}
+	}
+
+	if len(note) > 0 {
+		post.Note, err = noteEncrypt(ctx, g, note, recipient.User)
+		if err != nil {
+			return stellar1.PaymentResult{}, fmt.Errorf("error encrypting note: %v", err)
 		}
 	}
 

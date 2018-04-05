@@ -14,28 +14,6 @@
   "types": [
     {
       "type": "record",
-      "name": "EncryptedNote",
-      "fields": [
-        {
-          "type": "int",
-          "name": "v"
-        },
-        {
-          "type": "bytes",
-          "name": "e"
-        },
-        {
-          "type": "bytes",
-          "name": "n"
-        },
-        {
-          "type": "keybase1.KID",
-          "name": "KID"
-        }
-      ]
-    },
-    {
-      "type": "record",
       "name": "Members",
       "fields": [
         {

@@ -57,7 +57,7 @@ func (c *cmdWalletBalances) Run() error {
 	dui := c.G().UI.GetDumbOutputUI()
 	for _, balance := range balances {
 		kind := balance.Asset.Type
-		if balance.Asset.Type == "native" {
+		if balance.Asset.IsNativeXLM() {
 			kind = "XLM"
 		}
 		dui.Printf("%s\t%s\n", kind, balance.Amount)

@@ -4,13 +4,6 @@ protocol remote {
   import idl "github.com/keybase/client/go/protocol/keybase1" as keybase1;
   import idl "common.avdl";
 
-  record EncryptedNote {
-    int v;             // version 
-    bytes e;           // encrypted data
-    bytes n;           // nonce
-    keybase1.KID KID;  // public key data was encrypted for
-  }
-
   record Members {
     AccountID fromStellar;
     string fromKeybase;
